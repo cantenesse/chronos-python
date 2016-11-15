@@ -54,14 +54,13 @@ class ChronosClient(object):
     _user = None
     _password = None
 
-    def __init__(self, servers, proto="http", username=None, password=None, token=None, level='WARN'):
+    def __init__(self, servers, proto="http", username=None, password=None, extra_headers=None, level='WARN'):
         server_list = servers if isinstance(servers, list) else [servers]
         self.servers = ["%s://%s" % (proto, server) for server in server_list]
+        self.extra_headers = extra_headers
         if username and password:
             self._user = username
             self._password = password
-        if token:
-            self._token = token
         logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=level)
         self.logger = logging.getLogger(__name__)
 
@@ -139,9 +138,8 @@ class ChronosClient(object):
         conn = httplib2.Http(disable_ssl_certificate_validation=True)
         if self._user and self._password:
             conn.add_credentials(self._user, self._password)
-        if self._token:
-            hdrs['Authorization'] = "token=%s" % self._token
-            hdrs.update(headers)
+        if self.extra_headers:
+            hdrs.update(self.extra_headers)
 
         response = None
         servers = list(self.servers)
@@ -207,5 +205,5 @@ class ChronosJob(object):
     one_of = ["schedule", "parents"]
 
 
-def connect(servers, proto="http", username=None, password=None, token=None):
-    return ChronosClient(servers, proto=proto, username=username, password=password, token=token)
+def connect(servers, proto="http", username=None, password=None, extra_headers=None):
+    return ChronosClient(servers, proto=proto, username=username, password=password, extra_headers=extra_headers)
